@@ -1,1 +1,5 @@
+name: "Dashboard FIIs"
+title: "Dashboard de FIIs para Renda Passiva"
+description: "Análise dos melhores FIIs para renda passiva"
+output_dir: docs
 
