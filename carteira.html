@@ -10,5 +10,313 @@
 </head>
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-        <div class="container-
+        <div class="container-fluid">
+            <a class="navbar-brand" href="index.html">Dashboard FIIs</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="index.html">Início</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="monitoramento.html">Monitoramento</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="carteira.html">Minha Carteira</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="analise-setorial.html">Análise Setorial</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="alertas.html">Alertas</a>
+                    </li>
+                </ul>
+            </div>
+            <span class="navbar-text">
+                Última atualização: <span id="ultima-atualizacao">Carregando...</span>
+            </span>
+        </div>
+    </nav>
 
+    <div class="container mt-4">
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card text-white bg-primary">
+                    <div class="card-body">
+                        <h5 class="card-title">Patrimônio Total</h5>
+                        <p class="card-text display-4" id="patrimonio-total">R$ 0,00</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-white bg-success">
+                    <div class="card-body">
+                        <h5 class="card-title">Dividendos Mensais</h5>
+                        <p class="card-text display-4" id="dividendos-mensais">R$ 0,00</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-white bg-info">
+                    <div class="card-body">
+                        <h5 class="card-title">Yield Médio</h5>
+                        <p class="card-text display-4" id="yield-medio">0,00%</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-white bg-warning">
+                    <div class="card-body">
+                        <h5 class="card-title">Rentabilidade</h5>
+                        <p class="card-text display-4" id="rentabilidade-total">0,00%</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <ul class="nav nav-tabs mb-4" id="carteiraTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="resumo-tab" data-bs-toggle="tab" data-bs-target="#resumo" type="button" role="tab" aria-controls="resumo" aria-selected="true">Resumo</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="fiis-tab" data-bs-toggle="tab" data-bs-target="#fiis" type="button" role="tab" aria-controls="fiis" aria-selected="false">FIIs</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="transacoes-tab" data-bs-toggle="tab" data-bs-target="#transacoes" type="button" role="tab" aria-controls="transacoes" aria-selected="false">Transações</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="plano-tab" data-bs-toggle="tab" data-bs-target="#plano" type="button" role="tab" aria-controls="plano" aria-selected="false">Plano de Compras</button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="carteiraTabContent">
+            <div class="tab-pane fade show active" id="resumo" role="tabpanel" aria-labelledby="resumo-tab">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5>Composição da Carteira</h5>
+                            </div>
+                            <div class="card-body">
+                                <canvas id="grafico-composicao"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5>Dividendos Mensais</h5>
+                            </div>
+                            <div class="card-body">
+                                <canvas id="grafico-dividendos"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5>Evolução do Patrimônio</h5>
+                            </div>
+                            <div class="card-body">
+                                <canvas id="grafico-evolucao"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="fiis" role="tabpanel" aria-labelledby="fiis-tab">
+                <div class="card mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5>Meus FIIs</h5>
+                        <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#adicionarFiiModal">
+                            <i class="bi bi-plus-circle"></i> Adicionar FII
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped" id="tabela-carteira">
+                                <thead>
+                                    <tr>
+                                        <th>Ticker</th>
+                                        <th>Segmento</th>
+                                        <th>Quantidade</th>
+                                        <th>Preço Médio (R$)</th>
+                                        <th>Preço Atual (R$)</th>
+                                        <th>Total (R$)</th>
+                                        <th>Dividendo Mensal (R$)</th>
+                                        <th>Rentabilidade (%)</th>
+                                        <th>% da Carteira</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Dados serão carregados via JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="transacoes" role="tabpanel" aria-labelledby="transacoes-tab">
+                <div class="card mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5>Histórico de Transações</h5>
+                        <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#adicionarTransacaoModal">
+                            <i class="bi bi-plus-circle"></i> Nova Transação
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped" id="tabela-transacoes">
+                                <thead>
+                                    <tr>
+                                        <th>Data</th>
+                                        <th>Ticker</th>
+                                        <th>Tipo</th>
+                                        <th>Quantidade</th>
+                                        <th>Preço (R$)</th>
+                                        <th>Total (R$)</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Dados serão carregados via JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="plano" role="tabpanel" aria-labelledby="plano-tab">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5>Plano de Compras 2025</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped" id="tabela-plano">
+                                <thead>
+                                    <tr>
+                                        <th>Mês</th>
+                                        <th>FII 1</th>
+                                        <th>Valor (R$)</th>
+                                        <th>FII 2</th>
+                                        <th>Valor (R$)</th>
+                                        <th>Total Mensal (R$)</th>
+                                        <th>Acumulado (R$)</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Dados serão carregados via JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Adicionar FII -->
+    <div class="modal fade" id="adicionarFiiModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Adicionar FII à Carteira</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="form-adicionar-fii">
+                        <div class="mb-3">
+                            <label for="ticker" class="form-label">Ticker</label>
+                            <select class="form-select" id="ticker" required>
+                                <!-- Opções serão carregadas via JavaScript -->
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="quantidade" class="form-label">Quantidade</label>
+                            <input type="number" class="form-control" id="quantidade" min="1" value="1" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="preco" class="form-label">Preço de Compra (R$)</label>
+                            <input type="number" class="form-control" id="preco" step="0.01" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="data" class="form-label">Data da Compra</label>
+                            <input type="date" class="form-control" id="data" required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="btn-salvar-fii">Salvar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Adicionar Transação -->
+    <div class="modal fade" id="adicionarTransacaoModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Nova Transação</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="form-adicionar-transacao">
+                        <div class="mb-3">
+                            <label for="transacao-ticker" class="form-label">Ticker</label>
+                            <select class="form-select" id="transacao-ticker" required>
+                                <!-- Opções serão carregadas via JavaScript -->
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="transacao-tipo" class="form-label">Tipo</label>
+                            <select class="form-select" id="transacao-tipo" required>
+                                <option value="compra">Compra</option>
+                                <option value="venda">Venda</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="transacao-quantidade" class="form-label">Quantidade</label>
+                            <input type="number" class="form-control" id="transacao-quantidade" min="1" value="1" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="transacao-preco" class="form-label">Preço (R$)</label>
+                            <input type="number" class="form-control" id="transacao-preco" step="0.01" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="transacao-data" class="form-label">Data</label>
+                            <input type="date" class="form-control" id="transacao-data" required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="btn-salvar-transacao">Salvar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-light text-center text-lg-start mt-4">
+        <div class="text-center p-3">
+            © 2025 Dashboard FIIs - Desenvolvido para análise de investimentos
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/carteira.js"></script>
+</body>
+</html>
