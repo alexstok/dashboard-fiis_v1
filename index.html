@@ -8,25 +8,30 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <link rel="stylesheet" href="css/style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 </head>
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
         <div class="container-fluid">
-            <a class="navbar-brand" href="#">Dashboard FIIs</a>
+            <a class="navbar-brand" href="index.html">Dashboard FIIs</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav">
                     <li class="nav-item">
-                        <a class="nav-link active" href="#monitoramento">Monitoramento</a>
+                        <a class="nav-link active" href="index.html">Início</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#carteira">Minha Carteira</a>
+                        <a class="nav-link" href="monitoramento.html">Monitoramento</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#plano">Plano de Compras</a>
+                        <a class="nav-link" href="carteira.html">Minha Carteira</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="analise-setorial.html">Análise Setorial</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="alertas.html">Alertas</a>
                     </li>
                 </ul>
             </div>
@@ -37,12 +42,21 @@
     </nav>
 
     <div class="container mt-4">
-        <div class="row mb-4">
+        <div class="jumbotron bg-light p-4 rounded">
+            <h1 class="display-4">Dashboard de FIIs para Renda Passiva</h1>
+            <p class="lead">Análise dos melhores FIIs abaixo de R$25,00 para construção de renda passiva em 2025.</p>
+            <hr class="my-4">
+            <p>Utilize este dashboard para monitorar os melhores FIIs, gerenciar sua carteira e planejar suas compras mensais.</p>
+            <a class="btn btn-primary btn-lg" href="monitoramento.html" role="button">Ver FIIs Recomendados</a>
+        </div>
+
+        <div class="row mt-4">
             <div class="col-md-3">
                 <div class="card text-white bg-primary">
                     <div class="card-body">
-                        <h5 class="card-title">Total de FIIs</h5>
+                        <h5 class="card-title">FIIs Monitorados</h5>
                         <p class="card-text display-4" id="total-fiis">30</p>
+                        <a href="monitoramento.html" class="text-white">Ver detalhes</a>
                     </div>
                 </div>
             </div>
@@ -51,165 +65,79 @@
                     <div class="card-body">
                         <h5 class="card-title">Média DY Anual</h5>
                         <p class="card-text display-4" id="media-dy">0%</p>
+                        <a href="analise-setorial.html" class="text-white">Ver análise</a>
                     </div>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="card text-white bg-info">
                     <div class="card-body">
-                        <h5 class="card-title">Média P/VP</h5>
-                        <p class="card-text display-4" id="media-pvp">0</p>
+                        <h5 class="card-title">FIIs na Carteira</h5>
+                        <p class="card-text display-4" id="total-carteira">0</p>
+                        <a href="carteira.html" class="text-white">Ver carteira</a>
                     </div>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="card text-white bg-warning">
                     <div class="card-body">
-                        <h5 class="card-title">Preço Médio</h5>
-                        <p class="card-text display-4" id="media-preco">R$0</p>
+                        <h5 class="card-title">Alertas Ativos</h5>
+                        <p class="card-text display-4" id="total-alertas">0</p>
+                        <a href="alertas.html" class="text-white">Ver alertas</a>
                     </div>
                 </div>
             </div>
         </div>
 
-        <section id="monitoramento">
-            <div class="card mb-4">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h3>Top 30 FIIs para Renda Passiva</h3>
-                    <button class="btn btn-primary" id="atualizar-dados">
-                        <i class="bi bi-arrow-clockwise"></i> Atualizar Dados
-                    </button>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-striped table-hover" id="tabela-fiis">
-                            <thead>
-                                <tr>
-                                    <th>Ticker</th>
-                                    <th>Segmento</th>
-                                    <th>Preço Atual (R$)</th>
-                                    <th>Preço Justo (R$)</th>
-                                    <th>Último Dividendo (R$)</th>
-                                    <th>DY Mensal (%)</th>
-                                    <th>DY Anual (%)</th>
-                                    <th>P/VP</th>
-                                    <th>Vacância (%)</th>
-                                    <th>Ações</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <!-- Dados serão carregados via JavaScript -->
-                            </tbody>
-                        </table>
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Top 5 FIIs por Dividend Yield</h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="grafico-top-dy"></canvas>
                     </div>
                 </div>
             </div>
-        </section>
-
-        <section id="carteira" class="mb-4">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h3>Minha Carteira</h3>
-                    <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#adicionarFiiModal">
-                        <i class="bi bi-plus-circle"></i> Adicionar FII
-                    </button>
-                </div>
-                <div class="card-body">
-                    <div class="row mb-4">
-                        <div class="col-md-6">
-                            <canvas id="grafico-composicao"></canvas>
-                        </div>
-                        <div class="col-md-6">
-                            <canvas id="grafico-dividendos"></canvas>
-                        </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Distribuição por Segmento</h5>
                     </div>
-                    <div class="table-responsive">
-                        <table class="table table-striped" id="tabela-carteira">
-                            <thead>
-                                <tr>
-                                    <th>Ticker</th>
-                                    <th>Quantidade</th>
-                                    <th>Preço Médio (R$)</th>
-                                    <th>Preço Atual (R$)</th>
-                                    <th>Total (R$)</th>
-                                    <th>Dividendo Mensal (R$)</th>
-                                    <th>Rentabilidade (%)</th>
-                                    <th>% da Carteira</th>
-                                    <th>Ações</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <!-- Dados serão carregados via JavaScript -->
-                            </tbody>
-                        </table>
+                    <div class="card-body">
+                        <canvas id="grafico-segmentos"></canvas>
                     </div>
                 </div>
             </div>
-        </section>
+        </div>
 
-        <section id="plano" class="mb-4">
-            <div class="card">
-                <div class="card-header">
-                    <h3>Plano de Compras 2025</h3>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-striped" id="tabela-plano">
-                            <thead>
-                                <tr>
-                                    <th>Mês</th>
-                                    <th>FII 1</th>
-                                    <th>Valor (R$)</th>
-                                    <th>FII 2</th>
-                                    <th>Valor (R$)</th>
-                                    <th>Total Mensal (R$)</th>
-                                    <th>Acumulado (R$)</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <!-- Dados serão carregados via JavaScript -->
-                            </tbody>
-                        </table>
+        <div class="row mt-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Plano de Compras - Próximos 3 Meses</h5>
                     </div>
-                </div>
-            </div>
-        </section>
-    </div>
-
-    <!-- Modal Adicionar FII -->
-    <div class="modal fade" id="adicionarFiiModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Adicionar FII à Carteira</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="form-adicionar-fii">
-                        <div class="mb-3">
-                            <label for="ticker" class="form-label">Ticker</label>
-                            <select class="form-select" id="ticker" required>
-                                <!-- Opções serão carregadas via JavaScript -->
-                            </select>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped" id="tabela-plano-resumo">
+                                <thead>
+                                    <tr>
+                                        <th>Mês</th>
+                                        <th>FII 1</th>
+                                        <th>Valor (R$)</th>
+                                        <th>FII 2</th>
+                                        <th>Valor (R$)</th>
+                                        <th>Total (R$)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Dados serão carregados via JavaScript -->
+                                </tbody>
+                            </table>
                         </div>
-                        <div class="mb-3">
-                            <label for="quantidade" class="form-label">Quantidade</label>
-                            <input type="number" class="form-control" id="quantidade" min="1" value="1" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="preco" class="form-label">Preço de Compra (R$)</label>
-                            <input type="number" class="form-control" id="preco" step="0.01" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="data" class="form-label">Data da Compra</label>
-                            <input type="date" class="form-control" id="data" required>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-primary" id="btn-salvar-fii">Salvar</button>
+                        <a href="carteira.html#plano" class="btn btn-outline-primary mt-2">Ver plano completo</a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -222,7 +150,7 @@
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="js/dashboard.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/main.js"></script>
 </body>
 </html>
-
