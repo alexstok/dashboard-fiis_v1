@@ -410,6 +410,66 @@ function criarAlerta(ticker) {
     window.location.href = `alertas.html?ticker=${ticker}`;
 }
 
+// Adicione ao arquivo monitoramento.js
+function exportarParaExcel() {
+  // Obter dados da tabela
+  const tabela = document.getElementById('tabela-fiis');
+  const dados = [];
+  
+  // Obter cabeçalhos
+  const cabecalhos = [];
+  tabela.querySelectorAll('thead th').forEach(th => {
+    cabecalhos.push(th.textContent);
+  });
+  
+  // Obter linhas
+  tabela.querySelectorAll('tbody tr').forEach(tr => {
+    const linha = {};
+    tr.querySelectorAll('td').forEach((td, index) => {
+      linha[cabecalhos[index]] = td.textContent.replace(/\n/g, '').trim();
+    });
+    dados.push(linha);
+  });
+  
+  // Criar workbook
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.json_to_sheet(dados);
+  XLSX.utils.book_append_sheet(wb, ws, "FIIs");
+  
+  // Salvar arquivo
+  XLSX.writeFile(wb, "fiis_monitorados.xlsx");
+}
+
+// Adicionar botão de exportação
+document.getElementById('exportar-excel').addEventListener('click', exportarParaExcel);
+
+// Adicione ao arquivo monitoramento.js
+function compararFIIs() {
+  const fiisParaComparar = [];
+  
+  // Obter FIIs selecionados
+  document.querySelectorAll('.fii-checkbox:checked').forEach(checkbox => {
+    fiisParaComparar.push(checkbox.value);
+  });
+  
+  if (fiisParaComparar.length < 2) {
+    alert('Selecione pelo menos 2 FIIs para comparar.');
+    return;
+  }
+  
+  // Buscar dados dos FIIs selecionados
+  const dadosComparacao = fiisParaComparar.map(ticker => {
+    return dadosFIIs.find(fii => fii.ticker === ticker);
+  });
+  
+  // Renderizar gráfico de comparação
+  renderizarGraficoComparacao(dadosComparacao);
+  
+  // Exibir tabela comparativa
+  renderizarTabelaComparacao(dadosComparacao);
+}
+
+
 // Exportar funções para uso global
 window.mostrarDetalhesFII = mostrarDetalhesFII;
 window.adicionarACarteira = adicionarACarteira;
