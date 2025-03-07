@@ -1,1 +1,130 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alertas - Dashboard FIIs</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="index.html">Dashboard FIIs</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="index.html">Início</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="monitoramento.html">Monitoramento</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="carteira.html">Minha Carteira</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="analise-setorial.html">Análise Setorial</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="alertas.html">Alertas</a>
+                    </li>
+                </ul>
+            </div>
+            <span class="navbar-text">
+                Última atualização: <span id="ultima-atualizacao">Carregando...</span>
+            </span>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-md-4">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h3>Configurar Alerta</h3>
+                    </div>
+                    <div class="card-body">
+                        <form id="form-alerta">
+                            <div class="mb-3">
+                                <label for="alerta-ticker" class="form-label">FII</label>
+                                <select class="form-select" id="alerta-ticker" required>
+                                    <!-- Opções serão carregadas via JavaScript -->
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="alerta-tipo" class="form-label">Tipo de Alerta</label>
+                                <select class="form-select" id="alerta-tipo" required>
+                                    <option value="preco-acima">Preço acima de</option>
+                                    <option value="preco-abaixo">Preço abaixo de</option>
+                                    <option value="dy-acima">Dividend Yield acima de</option>
+                                    <option value="dy-abaixo">Dividend Yield abaixo de</option>
+                                    <option value="pvp-acima">P/VP acima de</option>
+                                    <option value="pvp-abaixo">P/VP abaixo de</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="alerta-valor" class="form-label">Valor</label>
+                                <input type="number" class="form-control" id="alerta-valor" step="0.01" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100">Criar Alerta</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-8">
+                <div class="card mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h3>Alertas Ativos</h3>
+                        <button class="btn btn-outline-danger" id="limpar-alertas">Limpar Todos</button>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped" id="tabela-alertas">
+                                <thead>
+                                    <tr>
+                                        <th>FII</th>
+                                        <th>Tipo</th>
+                                        <th>Valor</th>
+                                        <th>Status</th>
+                                        <th>Data Criação</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Dados serão carregados via JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h3>Notificações Recentes</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="list-group" id="lista-notificacoes">
+                            <!-- Dados serão carregados via JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-light text-center text-lg-start mt-4">
+        <div class="text-center p-3">
+            © 2025 Dashboard FIIs - Desenvolvido para análise de investimentos
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/alertas.js"></script>
+</body>
+</html>
 
