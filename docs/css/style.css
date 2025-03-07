@@ -1,0 +1,161 @@
+/* Variáveis CSS para personalização */
+:root {
+    --cor-primaria: #007bff;
+    --cor-secundaria: #6c757d;
+    --cor-sucesso: #28a745;
+    --cor-info: #17a2b8;
+    --cor-aviso: #ffc107;
+    --cor-perigo: #dc3545;
+    --cor-fundo: #f8f9fa;
+    --cor-texto: #212529;
+    --cor-borda: #dee2e6;
+    
+    /* Cores por segmento */
+    --cor-recebiveis: #4bc0c0;
+    --cor-logistico: #36a2eb;
+    --cor-shopping: #9966ff;
+    --cor-escritorios: #ff9f40;
+    --cor-fof: #ff6384;
+    --cor-hibrido: #ffcd56;
+}
+
+/* Estilos base */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: var(--cor-fundo);
+    color: var(--cor-texto);
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.card {
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+    background-color: #fff;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.card-header {
+    background-color: #f1f5f9;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+    font-weight: bold;
+}
+
+.table th {
+    background-color: #f1f5f9;
+}
+
+.navbar {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.display-4 {
+    font-size: 2.5rem;
+    font-weight: bold;
+}
+
+canvas {
+    max-width: 100%;
+}
+
+.btn-action {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+    margin: 0 2px;
+}
+
+footer {
+    background-color: #f1f5f9;
+    border-top: 1px solid #dee2e6;
+}
+
+/* Modo escuro */
+.dark-mode {
+    --cor-fundo: #222;
+    --cor-texto: #eee;
+    --cor-borda: #444;
+    background-color: var(--cor-fundo);
+    color: var(--cor-texto);
+}
+
+.dark-mode .card {
+    background-color: #333;
+    color: #eee;
+}
+
+.dark-mode .card-header {
+    background-color: #444;
+    color: #eee;
+}
+
+.dark-mode .table {
+    color: #eee;
+}
+
+.dark-mode .table th {
+    background-color: #444;
+}
+
+.dark-mode .navbar {
+    background-color: #111 !important;
+}
+
+.dark-mode .modal-content {
+    background-color: #333;
+    color: #eee;
+}
+
+.dark-mode .list-group-item {
+    background-color: #444;
+    color: #eee;
+    border-color: #555;
+}
+
+/* Classes para segmentos */
+.segmento-recebiveis { background-color: var(--cor-recebiveis); }
+.segmento-logistico { background-color: var(--cor-logistico); }
+.segmento-shopping { background-color: var(--cor-shopping); }
+.segmento-escritorios { background-color: var(--cor-escritorios); }
+.segmento-fof { background-color: var(--cor-fof); }
+.segmento-hibrido { background-color: var(--cor-hibrido); }
+
+/* Responsividade */
+@media (max-width: 768px) {
+    .display-4 {
+        font-size: 1.8rem;
+    }
+    
+    .card-title {
+        font-size: 1.2rem;
+    }
+    
+    .table {
+        font-size: 0.9rem;
+    }
+}
+
+/* Animações e transições */
+.card:hover {
+    transform: translateY(-5px);
+    transition: transform 0.3s ease;
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* Estilos para personalização de cores */
+.color-picker-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.color-picker-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.color-picker-label {
+    margin-top: 5px;
+    font-size: 0.8rem;
+}
