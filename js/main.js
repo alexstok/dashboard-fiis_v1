@@ -132,3 +132,47 @@ document.addEventListener('DOMContentLoaded', async () => {
         alert('Erro ao carregar dados. Por favor, tente novamente mais tarde.');
     }
 });
+
+// Função para alternar modo escuro
+function alternarModoEscuro() {
+    document.body.classList.toggle('dark-mode');
+    
+    // Salvar preferência do usuário
+    const modoEscuroAtivo = document.body.classList.contains('dark-mode');
+    localStorage.setItem('modo-escuro', modoEscuroAtivo);
+    
+    // Atualizar ícone do botão
+    const botao = document.getElementById('btn-modo-escuro');
+    if (botao) {
+        botao.innerHTML = modoEscuroAtivo ? 
+            '<i class="bi bi-sun"></i>' : 
+            '<i class="bi bi-moon"></i>';
+    }
+}
+
+// Verificar preferência salva
+document.addEventListener('DOMContentLoaded', () => {
+    const modoEscuroSalvo = localStorage.getItem('modo-escuro') === 'true';
+    
+    if (modoEscuroSalvo) {
+        document.body.classList.add('dark-mode');
+    }
+    
+    // Adicionar botão de modo escuro se não existir
+    if (!document.getElementById('btn-modo-escuro')) {
+        const navbar = document.querySelector('.navbar-nav');
+        if (navbar) {
+            const li = document.createElement('li');
+            li.className = 'nav-item';
+            li.innerHTML = `
+                <button id="btn-modo-escuro" class="btn btn-link nav-link">
+                    <i class="bi ${modoEscuroSalvo ? 'bi-sun' : 'bi-moon'}"></i>
+                </button>
+            `;
+            navbar.appendChild(li);
+            
+            // Adicionar evento ao botão
+            document.getElementById('btn-modo-escuro').addEventListener('click', alternarModoEscuro);
+        }
+    }
+});
