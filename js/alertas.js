@@ -423,4 +423,3 @@ window.removerAlerta = removerAlerta;
 
 // Verificar alertas periodicamente
 setInterval(verificarAlertas, 60000); // Verificar a cada minuto
-
