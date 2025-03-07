@@ -268,3 +268,47 @@ function renderizarPlanoResumo() {
     });
 }
 
+// Adicione ao arquivo main.js
+function alternarModoEscuro() {
+  document.body.classList.toggle('dark-mode');
+  
+  // Salvar preferência do usuário
+  const modoEscuroAtivo = document.body.classList.contains('dark-mode');
+  localStorage.setItem('modo-escuro', modoEscuroAtivo);
+  
+  // Atualizar ícone do botão
+  const botao = document.getElementById('btn-modo-escuro');
+  botao.innerHTML = modoEscuroAtivo ? 
+    '<i class="bi bi-sun"></i>' : 
+    '<i class="bi bi-moon"></i>';
+}
+
+// Verificar preferência salva
+document.addEventListener('DOMContentLoaded', () => {
+  const modoEscuroSalvo = localStorage.getItem('modo-escuro') === 'true';
+  
+  if (modoEscuroSalvo) {
+    document.body.classList.add('dark-mode');
+    document.getElementById('btn-modo-escuro').innerHTML = '<i class="bi bi-sun"></i>';
+  }
+});
+
+// Adicionar ao CSS
+// No arquivo style.css
+.dark-mode {
+  background-color: #222;
+  color: #eee;
+}
+
+.dark-mode .card {
+  background-color: #333;
+  color: #eee;
+}
+
+.dark-mode .table {
+  color: #eee;
+}
+
+.dark-mode .navbar {
+  background-color: #111 !important;
+}
