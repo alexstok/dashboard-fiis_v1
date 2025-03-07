@@ -29,6 +29,70 @@ async function buscarDadosFIIs() {
         return dadosCache.fiis;
     }
 
+/ Adicione ao arquivo api.js
+async function buscarDadosStatusInvest(ticker) {
+  try {
+    // Em ambiente real, você precisaria de um proxy CORS
+    const response = await fetch(`https://cors-anywhere.herokuapp.com/https://statusinvest.com.br/fundos-imobiliarios/${ticker}`);
+    const html = await response.text();
+    
+    // Use Cheerio para extrair dados (adicione a biblioteca ao seu projeto)
+    const $ = cheerio.load(html);
+    
+    // Extrair dados específicos
+    const precoAtual = parseFloat($('.price-current').text().replace('R$', '').trim());
+    const dy = parseFloat($('.indicator-value[title="Dividend Yield"]').text().replace('%', '').trim());
+    
+    return { precoAtual, dy };
+  } catch (error) {
+    console.error('Erro ao buscar dados do Status Invest:', error);
+    return null;
+  }
+}
+
+// Adicione ao arquivo api.js
+async function buscarDadosFundsExplorer(ticker) {
+  try {
+    // Você pode usar a API pública do Funds Explorer ou web scraping
+    const response = await fetch(`https://cors-anywhere.herokuapp.com/https://www.fundsexplorer.com.br/funds/${ticker}`);
+    const html = await response.text();
+    
+    // Use Cheerio para extrair dados
+    const $ = cheerio.load(html);
+    
+    // Extrair informações específicas
+    const patrimonioLiquido = $('.patrimonio-liquido').text();
+    const valorPatrimonial = $('.valor-patrimonial').text();
+    
+    return { patrimonioLiquido, valorPatrimonial };
+  } catch (error) {
+    console.error('Erro ao buscar dados do Funds Explorer:', error);
+    return null;
+  }
+}
+
+    
+// Adicione ao arquivo api.js
+async function buscarDadosB3(ticker) {
+  try {
+    // Substitua pela URL real da API da B3 e sua chave de API
+    const apiKey = 'SUA_CHAVE_API_B3';
+    const response = await fetch(`https://api.b3.com.br/dados/ticker/${ticker}`, {
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Erro ao buscar dados da B3:', error);
+    return null;
+  }
+}
+
+
     try {
         // Em produção, substituir por chamada real à API
         // const response = await fetch('https://api.exemplo.com/fiis');
@@ -151,26 +215,7 @@ async function buscarDadosHistoricos(ticker, periodo = '1y') {
     }
 }
 
-// Adicione ao arquivo api.js
-async function buscarDadosStatusInvest(ticker) {
-  try {
-    // Em ambiente real, você precisaria de um proxy CORS
-    const response = await fetch(`https://cors-anywhere.herokuapp.com/https://statusinvest.com.br/fundos-imobiliarios/${ticker}`);
-    const html = await response.text();
-    
-    // Use Cheerio para extrair dados (adicione a biblioteca ao seu projeto)
-    const $ = cheerio.load(html);
-    
-    // Extrair dados específicos
-    const precoAtual = parseFloat($('.price-current').text().replace('R$', '').trim());
-    const dy = parseFloat($('.indicator-value[title="Dividend Yield"]').text().replace('%', '').trim());
-    
-    return { precoAtual, dy };
-  } catch (error) {
-    console.error('Erro ao buscar dados do Status Invest:', error);
-    return null;
-  }
-}
+/
 
 
 /**
