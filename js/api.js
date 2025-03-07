@@ -347,6 +347,36 @@ function calcularScore(fii) {
     return Math.round(scoreTotal * 10);
 }
 
+// Adicione ao arquivo api.js
+const coresPorSegmento = {
+  'Recebíveis': '#4bc0c0',
+  'Logístico': '#36a2eb',
+  'Shopping': '#9966ff',
+  'Escritórios': '#ff9f40',
+  'Fundo de Fundos': '#ff6384',
+  'Híbrido': '#ffcd56'
+};
+
+// Permitir personalização
+function salvarCoresPersonalizadas(novasCores) {
+  localStorage.setItem('cores-segmentos', JSON.stringify(novasCores));
+}
+
+function obterCoresSegmentos() {
+  const coresPersonalizadas = localStorage.getItem('cores-segmentos');
+  return coresPersonalizadas ? JSON.parse(coresPersonalizadas) : coresPorSegmento;
+}
+
+// Adicione ao CSS
+// No arquivo style.css
+.segmento-recebiveis { background-color: var(--cor-recebiveis, #4bc0c0); }
+.segmento-logistico { background-color: var(--cor-logistico, #36a2eb); }
+.segmento-shopping { background-color: var(--cor-shopping, #9966ff); }
+.segmento-escritorios { background-color: var(--cor-escritorios, #ff9f40); }
+.segmento-fof { background-color: var(--cor-fof, #ff6384); }
+.segmento-hibrido { background-color: var(--cor-hibrido, #ffcd56); }
+
+
 /**
  * Analisa dados setoriais dos FIIs
  */
