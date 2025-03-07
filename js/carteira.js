@@ -70,6 +70,83 @@ function carregarCarteira() {
             item.rentabilidade = ((item.precoAtual / item.precoMedio - 1) * 100).toFixed(2);
         }
     });
+
+// Adicione ao arquivo carteira.js
+function simularCenarios() {
+  const cenarios = [
+    { nome: 'Otimista', valorização: 0.15, dividendos: 0.12 },
+    { nome: 'Moderado', valorização: 0.08, dividendos: 0.09 },
+    { nome: 'Pessimista', valorização: 0.02, dividendos: 0.06 }
+  ];
+  
+  const resultados = [];
+  
+  // Para cada cenário, calcular o resultado em 12 meses
+  cenarios.forEach(cenario => {
+    let valorTotal = carteira.reduce((sum, item) => sum + item.total, 0);
+    let dividendosAcumulados = 0;
+    
+    // Simular 12 meses
+    for (let i = 0; i < 12; i++) {
+      // Calcular dividendos do mês
+      const dividendosMes = valorTotal * (cenario.dividendos / 12);
+      dividendosAcumulados += dividendosMes;
+      
+      // Calcular valorização do mês
+      valorTotal = valorTotal * (1 + (cenario.valorização / 12));
+    }
+    
+    resultados.push({
+      cenario: cenario.nome,
+      valorFinal: valorTotal,
+      dividendosAcumulados,
+      retornoTotal: ((valorTotal + dividendosAcumulados) / carteira.reduce((sum, item) => sum + item.total, 0) - 1) * 100
+    });
+  });
+  
+  // Renderizar resultados
+  renderizarResultadosCenarios(resultados);
+}
+
+    // Adicione ao arquivo carteira.js
+function calcularImpostoRenda() {
+  // Obter transações de venda
+  const vendasNoMes = transacoes.filter(t => 
+    t.tipo === 'venda' && 
+    new Date(t.data).getMonth() === new Date().getMonth() &&
+    new Date(t.data).getFullYear() === new Date().getFullYear()
+  );
+  
+  if (vendasNoMes.length === 0) {
+    alert('Não há vendas no mês atual para calcular imposto.');
+    return;
+  }
+  
+  // Calcular lucro total nas vendas
+  let lucroTotal = 0;
+  
+  vendasNoMes.forEach(venda => {
+    // Encontrar preço médio de compra
+    const fiiCarteira = carteira.find(item => item.ticker === venda.ticker);
+    const precoMedioCompra = fiiCarteira ? fiiCarteira.precoMedio : 0;
+    
+    // Calcular lucro
+    const valorVenda = venda.quantidade * venda.preco;
+    const valorCompra = venda.quantidade * precoMedioCompra;
+    const lucro = valorVenda - valorCompra;
+    
+    if (lucro > 0) {
+      lucroTotal += lucro;
+    }
+  });
+  
+  // Calcular imposto (15% sobre o lucro)
+  const impostoDevido = lucroTotal * 0.15;
+  
+  // Exibir resultado
+  alert(`Lucro total nas vendas: R$ ${lucroTotal.toFixed(2)}\nImposto devido (15%): R$ ${impostoDevido.toFixed(2)}`);
+}
+
     
     // Calcular percentual da carteira
     const totalCarteira = carteira.reduce((sum, item) => sum + item.total, 0);
