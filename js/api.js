@@ -260,5 +260,69 @@ function calcularScore(fii) {
     const pontos = {
         dyAnual: Math.min(10, fii.dyAnual / 1.5),
         pvp: Math.max
+            // Pontuações normalizadas (0-10)
+    const pontos = {
+        dyAnual: Math.min(10, fii.dyAnual / 1.5),
+        pvp: Math.max(0, 10 - (fii.pvp - 0.7) * 10),
+        liquidez: Math.min(10, fii.liquidezDiaria / 500000),
+        vacancia: fii.segmento === 'Recebíveis' || fii.segmento === 'Fundo de Fundos' ? 
+                 10 : Math.max(0, 10 - fii.vacancia),
+        diversificacao: Math.min(10, fii.numAtivos / 5),
+        gestao: 7 // Valor padrão se não disponível
+    };
+    
+    // Cálculo do score ponderado
+    let scoreTotal = 0;
+    for (const [indicador, peso] of Object.entries(pesos)) {
+        scoreTotal += pontos[indicador] * peso / 100;
+    }
+    
+    return Math.round(scoreTotal * 10);
+}
 
+/**
+ * Analisa dados setoriais dos FIIs
+ */
+function analisarSetores(dadosFIIs) {
+    // Agrupar FIIs por setor
+    const setores = {};
+    
+    dadosFIIs.forEach(fii => {
+        if (!setores[fii.segmento]) {
+            setores[fii.segmento] = {
+                fiis: [],
+                dyMedio: 0,
+                pvpMedio: 0,
+                vacanciaMedio: 0,
+                precoMedio: 0,
+                scoreMedio: 0
+            };
+        }
+        
+        setores[fii.segmento].fiis.push(fii);
+    });
+    
+    // Calcular médias por setor
+    Object.keys(setores).forEach(segmento => {
+        const fiisSetor = setores[segmento].fiis;
+        const numFiis = fiisSetor.length;
+        
+        setores[segmento].dyMedio = fiisSetor.reduce((sum, fii) => sum + fii.dyAnual, 0) / numFiis;
+        setores[segmento].pvpMedio = fiisSetor.reduce((sum, fii) => sum + fii.pvp, 0) / numFiis;
+        setores[segmento].vacanciaMedio = fiisSetor.reduce((sum, fii) => sum + (fii.vacancia || 0), 0) / numFiis;
+        setores[segmento].precoMedio = fiisSetor.reduce((sum, fii) => sum + fii.precoAtual, 0) / numFiis;
+        setores[segmento].scoreMedio = fiisSetor.reduce((sum, fii) => sum + fii.score, 0) / numFiis;
+    });
+    
+    return setores;
+}
 
+// Exportar funções
+window.API = {
+    buscarDadosFIIs,
+    buscarDadosHistoricos,
+    buscarHistoricoDividendos,
+    calcularPrecoJusto,
+    calcularScore,
+    analisarSetores
+};
