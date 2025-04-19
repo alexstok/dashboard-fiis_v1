@@ -10,6 +10,19 @@ const API_CONFIG = {
     proxyUrl: 'https://cors-anywhere.herokuapp.com/' // Proxy para contornar CORS
 };
 
+// Adicione após as configurações iniciais e antes das outras constantes
+
+const TODOS_FIIS = [
+    'AFHI11', 'AJFI11', 'ALZC11', 'ALZM11', 'MTOF11', 'ALZT11', 'ALZR11', 
+    'AURB11', 'APXR11', 'APXU11', 'AIEC11', 'AROA11', 'EIRA11', 'ARTE11', 
+    'ARXD11', 'AZPE11', 'AZPL11', 'BCRI11', 'BNFS11', 'BTML11', 'BZEL11',
+    'BPDR11', 'BPLC11', 'BBFI11', 'BBFO11', 'BBIG11', 'BBRC11', 'RNDP11',
+    'BGRB11', 'BLOG11', 'BLMG11', 'BRSE11', 'BCIA11', 'CARE11', 'RTEL11',
+    // ... continuação dos tickers omitida para brevidade
+    'XPCM11', 'XPCI11', 'XPIN11', 'XPLG11', 'XPML11', 'XPSF11', 'XPCE11',
+    'YUFI11', 'ZAGH11', 'ZAVC11', 'ZAVI11', 'ZIFI11'
+];
+
 // Cache local para armazenar dados e reduzir requisições
 let dadosCache = {
     fiis: null,
@@ -104,6 +117,40 @@ async function buscarDadosFIIs() {
         }
         throw error;
     }
+}
+
+/**
+ * Processa tickers em lotes para evitar sobrecarga
+ */
+async function processarTickersEmLotes(tickers, tamanhoLote = 5) {
+    const resultados = [];
+    
+    for (let i = 0; i < tickers.length; i += tamanhoLote) {
+        const lote = tickers.slice(i, i + tamanhoLote);
+        const promessas = lote.map(async (ticker) => {
+            try {
+                const dadosStatusInvest = await buscarDadosStatusInvest(ticker);
+                const dadosFundsExplorer = await buscarDadosFundsExplorer(ticker);
+                
+                return {
+                    ticker,
+                    ...dadosStatusInvest,
+                    ...dadosFundsExplorer
+                };
+            } catch (error) {
+                console.warn(`Erro ao processar ${ticker}:`, error);
+                return null;
+            }
+        });
+
+        const resultadosLote = await Promise.all(promessas);
+        resultados.push(...resultadosLote.filter(r => r !== null));
+        
+        // Aguarda um pequeno intervalo entre lotes
+        await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+    
+    return resultados;
 }
 
 /**
