@@ -71,16 +71,19 @@ footer {
 
 /* Modo escuro */
 .dark-mode {
-    --cor-fundo: #222;
-    --cor-texto: #eee;
-    --cor-borda: #444;
+    --cor-fundo: #1a1a1a;
+    --cor-texto: #f0f0f0;
+    --cor-borda: #333;
+    --cor-card: #2d2d2d;
+    --cor-hover: #3d3d3d;
     background-color: var(--cor-fundo);
     color: var(--cor-texto);
 }
 
 .dark-mode .card {
-    background-color: #333;
-    color: #eee;
+    background-color: var(--cor-card);
+    border-color: var(--cor-borda);
+    color: var(--cor-texto);
 }
 
 .dark-mode .card-header {
@@ -89,11 +92,16 @@ footer {
 }
 
 .dark-mode .table {
-    color: #eee;
+    color: var(--cor-texto);
 }
 
+.dark-mode .table td,
 .dark-mode .table th {
-    background-color: #444;
+    border-color: var(--cor-borda);
+}
+
+.dark-mode .table-striped tbody tr:nth-of-type(odd) {
+    background-color: rgba(255, 255, 255, 0.05);
 }
 
 .dark-mode .navbar {
@@ -101,14 +109,47 @@ footer {
 }
 
 .dark-mode .modal-content {
-    background-color: #333;
-    color: #eee;
+    background-color: var(--cor-card);
+    color: var(--cor-texto);
+    border-color: var(--cor-borda);
+}
+
+.dark-mode .modal-header,
+.dark-mode .modal-footer {
+    border-color: var(--cor-borda);
+}
+
+.dark-mode .form-control,
+.dark-mode .form-select {
+    background-color: var(--cor-fundo);
+    border-color: var(--cor-borda);
+    color: var(--cor-texto);
+}
+
+.dark-mode .form-control:focus,
+.dark-mode .form-select:focus {
+    background-color: var(--cor-fundo);
+    border-color: var(--cor-primaria);
+    color: var(--cor-texto);
 }
 
 .dark-mode .list-group-item {
     background-color: #444;
     color: #eee;
     border-color: #555;
+}
+
+.dark-mode .nav-link {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.dark-mode .nav-link:hover,
+.dark-mode .nav-link:focus {
+    color: var(--cor-texto);
+}
+
+.dark-mode .nav-link.active {
+    color: var(--cor-primaria);
 }
 
 /* Classes para segmentos */
@@ -158,4 +199,30 @@ footer {
 .color-picker-label {
     margin-top: 5px;
     font-size: 0.8rem;
+}
+
+/* Notificações */
+#notification-container {
+    pointer-events: none;
+}
+
+#notification-container .alert {
+    pointer-events: auto;
+    margin-bottom: 10px;
+    max-width: 400px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transform: translateX(100%);
+    animation: slideIn 0.3s forwards;
+}
+
+#notification-container .alert.hide {
+    animation: slideOut 0.3s forwards;
+}
+
+@keyframes slideIn {
+    to { transform: translateX(0); }
+}
+
+@keyframes slideOut {
+    to { transform: translateX(120%); }
 }

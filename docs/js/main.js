@@ -27,8 +27,6 @@ const preferenciasUsuario = {
         };
     },
     
-    // Continuação do código do main.js
-
     // Salvar preferências
     salvar: function(prefs) {
         localStorage.setItem('preferencias-usuario', JSON.stringify(prefs));
@@ -63,6 +61,57 @@ const preferenciasUsuario = {
     }
 };
 
+// Sistema de notificações
+const notificationSystem = {
+    show: function(message, type = 'info', duration = 5000) {
+        const container = document.getElementById('notification-container') || this.createContainer();
+        
+        const notification = document.createElement('div');
+        notification.className = `alert alert-${type} alert-dismissible fade show notification`;
+        notification.role = 'alert';
+        
+        notification.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+        
+        container.appendChild(notification);
+        
+        // Auto-remover após duração especificada
+        setTimeout(() => {
+            notification.classList.remove('show');
+            setTimeout(() => notification.remove(), 300);
+        }, duration);
+    },
+    
+    createContainer: function() {
+        const container = document.createElement('div');
+        container.id = 'notification-container';
+        container.style.cssText = 'position: fixed; top: 20px; right: 20px; z-index: 9999;';
+        document.body.appendChild(container);
+        return container;
+    },
+    
+    success: function(message) {
+        this.show(message, 'success');
+    },
+    
+    error: function(message) {
+        this.show(message, 'danger', 8000);
+    },
+    
+    warning: function(message) {
+        this.show(message, 'warning', 6000);
+    },
+    
+    info: function(message) {
+        this.show(message, 'info');
+    }
+};
+
+// Adicionar ao objeto window para uso global
+window.notify = notificationSystem;
+
 // Função para alternar modo escuro
 function alternarModoEscuro() {
     document.body.classList.toggle('dark-mode');
@@ -80,6 +129,150 @@ function alternarModoEscuro() {
             '<i class="bi bi-moon"></i>';
     }
 }
+
+// Renderizar gráfico dos top 5 FIIs por DY
+function renderizarGraficoTopDY() {
+    renderManager.enqueue('grafico-top-dy', () => {
+        const ctx = document.getElementById('grafico-top-dy');
+        renderManager.optimizeCanvas(ctx);
+
+        const topFIIs = dadosFIIs
+            .sort((a, b) => b.dyAnual - a.dyAnual)
+            .slice(0, 5);
+
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: topFIIs.map(fii => fii.ticker),
+                datasets: [{
+                    label: 'DY Anual (%)',
+                    data: topFIIs.map(fii => fii.dyAnual),
+                    backgroundColor: topFIIs.map(fii => API.obterCoresSegmentos()[fii.segmento]),
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const fii = topFIIs[context.dataIndex];
+                                return [
+                                    `DY: ${fii.dyAnual.toFixed(2)}%`,
+                                    `Segmento: ${fii.segmento}`,
+                                    `Preço: R$ ${fii.precoAtual.toFixed(2)}`
+                                ];
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'DY Anual (%)'
+                        }
+                    }
+                }
+            }
+        });
+    }, 1); // Alta prioridade
+}
+
+// Renderizar gráfico de distribuição por segmento
+function renderizarGraficoSegmentos() {
+    renderManager.enqueue('grafico-segmentos', () => {
+        const ctx = document.getElementById('grafico-segmentos');
+        renderManager.optimizeCanvas(ctx);
+
+        const segmentos = {};
+        dadosFIIs.forEach(fii => {
+            if (!segmentos[fii.segmento]) {
+                segmentos[fii.segmento] = 0;
+            }
+            segmentos[fii.segmento]++;
+        });
+
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: Object.keys(segmentos),
+                datasets: [{
+                    data: Object.values(segmentos),
+                    backgroundColor: Object.keys(segmentos).map(seg => API.obterCoresSegmentos()[seg]),
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.raw || 0;
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = Math.round((value / total) * 100);
+                                return `${label}: ${value} FIIs (${percentage}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }, 1); // Alta prioridade
+}
+
+// Renderizar tabela do plano de compras resumido
+const renderizarPlanoResumo = renderManager.debounce(() => {
+    renderManager.enqueue('tabela-plano-resumo', () => {
+        const tbody = document.querySelector('#tabela-plano-resumo tbody');
+        tbody.innerHTML = '';
+
+        // Obter próximos 3 meses do plano
+        const planoProximos = planoCompras.slice(0, 3);
+
+        planoProximos.forEach(plano => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${plano.mes}</td>
+                <td>${plano.fii1}</td>
+                <td>R$ ${plano.valorFii1.toFixed(2)}</td>
+                <td>${plano.fii2}</td>
+                <td>R$ ${plano.valorFii2.toFixed(2)}</td>
+                <td>R$ ${plano.valorMensal.toFixed(2)}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }, 0); // Prioridade normal
+}, 200);
+
+// Atualizar cards principais
+const atualizarCards = renderManager.debounce(() => {
+    renderManager.enqueue('cards', () => {
+        // Total de FIIs monitorados
+        document.getElementById('total-fiis').textContent = dadosFIIs.length;
+
+        // Média de DY
+        const mediaGeral = dadosFIIs.reduce((sum, fii) => sum + fii.dyAnual, 0) / dadosFIIs.length;
+        document.getElementById('media-dy').textContent = `${mediaGeral.toFixed(2)}%`;
+
+        // Total na carteira
+        const totalCarteira = carteira.length;
+        document.getElementById('total-carteira').textContent = totalCarteira;
+
+        // Total de alertas
+        const totalAlertas = (JSON.parse(localStorage.getItem('alertas-fiis')) || []).length;
+        document.getElementById('total-alertas').textContent = totalAlertas;
+    }, 2); // Máxima prioridade
+}, 100);
 
 // Inicialização
 document.addEventListener('DOMContentLoaded', async () => {

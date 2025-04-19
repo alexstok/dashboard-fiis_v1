@@ -1,223 +1,225 @@
-// Função para exportar dados para Excel
-function exportarTabelaParaExcel() {
-    // Verificar se a biblioteca SheetJS está disponível
-    if (typeof XLSX === 'undefined') {
-        // Carregar biblioteca dinamicamente se não estiver disponível
-        const script = document.createElement('script');
-        script.src = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
-        script.onload = function() {
-            realizarExportacao();
-        };
-        document.head.appendChild(script);
-    } else {
-        realizarExportacao();
-    }
-}
+/**
+ * monitoramento.js - Script para a página de monitoramento de FIIs
+ * Versão atualizada com sistema de renderização otimizada
+ */
 
-function realizarExportacao() {
-    // Obter dados da tabela
-    const tabela = document.getElementById('tabela-fiis');
-    const dados = [];
-    
-    // Obter cabeçalhos
-    const cabecalhos = [];
-    tabela.querySelectorAll('thead th').forEach(th => {
-        cabecalhos.push(th.textContent);
-    });
-    
-    // Obter linhas
-    tabela.querySelectorAll('tbody tr').forEach(tr => {
-        const linha = {};
-        tr.querySelectorAll('td').forEach((td, index) => {
-            // Ignorar a última coluna (ações)
-            if (index < cabecalhos.length - 1) {
-                linha[cabecalhos[index]] = td.textContent.replace(/\n/g, '').trim();
-            }
+// Dados globais
+let dadosFIIs = [];
+let filtrosAtivos = {
+    segmentos: ['Recebíveis', 'Logístico', 'Shopping', 'Escritórios', 'Fundo de Fundos', 'Híbrido'],
+    dyMinimo: 8,
+    pvpMaximo: 1,
+    scoreMinimo: 60
+};
+
+// Inicializar monitoramento em tempo real
+let unsubscribe = null;
+
+// Inicialização
+document.addEventListener('DOMContentLoaded', async () => {
+    try {
+        // Atualizar data
+        document.getElementById('ultima-atualizacao').textContent = new Date().toLocaleDateString('pt-BR');
+        
+        // Carregar dados dos FIIs
+        await atualizarDados();
+        
+        // Configurar eventos
+        configurarEventos();
+        
+        // Iniciar monitoramento em tempo real
+        unsubscribe = realtimeMonitor.subscribe('monitoramento', (dadosAtualizados) => {
+            dadosFIIs = dadosAtualizados;
+            renderizarTabela();
+            document.getElementById('ultima-atualizacao').textContent = new Date().toLocaleDateString('pt-BR');
+            notify.success('Dados atualizados com sucesso!');
         });
-        dados.push(linha);
-    });
-    
-    // Criar workbook
-    const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.json_to_sheet(dados);
-    XLSX.utils.book_append_sheet(wb, ws, "FIIs");
-    
-    // Salvar arquivo
-    XLSX.writeFile(wb, "fiis_monitorados.xlsx");
-}
-
-// Adicionar botão de exportação ao HTML
-document.addEventListener('DOMContentLoaded', function() {
-    const cardHeader = document.querySelector('#monitoramento .card-header div');
-    if (cardHeader) {
-        const btnExportar = document.createElement('button');
-        btnExportar.className = 'btn btn-success me-2';
-        btnExportar.innerHTML = '<i class="bi bi-file-excel"></i> Exportar Excel';
-        btnExportar.addEventListener('click', exportarTabelaParaExcel);
-        cardHeader.prepend(btnExportar);
+        
+    } catch (error) {
+        console.error('Erro ao inicializar monitoramento:', error);
+        notify.error('Erro ao carregar dados. Por favor, tente novamente mais tarde.');
     }
 });
 
-// Função para comparar FIIs selecionados
-function compararFIIs() {
-    const fiisParaComparar = [];
-    
-    // Obter FIIs selecionados
-    document.querySelectorAll('.fii-checkbox:checked').forEach(checkbox => {
-        fiisParaComparar.push(checkbox.value);
-    });
-    
-    if (fiisParaComparar.length < 2) {
-        alert('Selecione pelo menos 2 FIIs para comparar.');
-        return;
+// Parar monitoramento ao sair da página
+window.addEventListener('beforeunload', () => {
+    if (unsubscribe) {
+        unsubscribe();
     }
-    
-    // Buscar dados dos FIIs selecionados
-    const dadosComparacao = fiisParaComparar.map(ticker => {
-        return dadosFIIs.find(fii => fii.ticker === ticker);
+});
+
+// Atualizar dados dos FIIs
+async function atualizarDados() {
+    try {
+        // Mostrar indicador de carregamento
+        const tbody = document.querySelector('#tabela-fiis tbody');
+        tbody.innerHTML = '<tr><td colspan="14" class="text-center">Carregando dados...</td></tr>';
+        
+        // Buscar dados atualizados
+        dadosFIIs = await API.buscarDadosFIIs();
+        
+        // Renderizar tabela com novos dados
+        renderizarTabela();
+        
+        notify.success('Dados atualizados com sucesso!');
+    } catch (error) {
+        console.error('Erro ao atualizar dados:', error);
+        notify.error('Erro ao atualizar dados. Tente novamente.');
+    }
+}
+
+// Renderizar tabela de FIIs
+const renderizarTabela = renderManager.debounce(() => {
+    renderManager.enqueue('tabela-fiis', () => {
+        const tbody = document.querySelector('#tabela-fiis tbody');
+        tbody.innerHTML = '';
+        
+        // Filtrar FIIs
+        const fiisFiltrados = dadosFIIs.filter(fii => 
+            filtrosAtivos.segmentos.includes(fii.segmento) &&
+            fii.dyAnual >= filtrosAtivos.dyMinimo &&
+            fii.pvp <= filtrosAtivos.pvpMaximo &&
+            fii.score >= filtrosAtivos.scoreMinimo &&
+            fii.precoAtual <= 25 // Filtro fixo de preço máximo
+        );
+        
+        // Ordenar por score
+        const fiisOrdenados = [...fiisFiltrados].sort((a, b) => b.score - a.score);
+        
+        // Limitar aos top 30
+        const fiisTop30 = fiisOrdenados.slice(0, 30);
+        
+        fiisTop30.forEach(fii => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${fii.ticker}</td>
+                <td>${fii.segmento}</td>
+                <td>R$ ${fii.precoAtual.toFixed(2)}</td>
+                <td>R$ ${fii.precoJusto.toFixed(2)}</td>
+                <td>${((fii.precoJusto / fii.precoAtual - 1) * 100).toFixed(2)}%</td>
+                <td>R$ ${fii.ultimoDividendo.toFixed(2)}</td>
+                <td>${(fii.dyAnual / 12).toFixed(2)}%</td>
+                <td>${fii.dyAnual.toFixed(2)}%</td>
+                <td>${fii.pvp.toFixed(2)}</td>
+                <td>${fii.capRate?.toFixed(2) || '-'}%</td>
+                <td>${fii.ffoYield?.toFixed(2) || '-'}%</td>
+                <td>${fii.vacanciaFisica?.toFixed(2) || '-'}%</td>
+                <td>${fii.score.toFixed(0)}</td>
+                <td>
+                    <button class="btn btn-sm btn-primary me-1" onclick="window.location.href='carteira.html?adicionar=${fii.ticker}'">
+                        <i class="bi bi-plus-circle"></i>
+                    </button>
+                    <button class="btn btn-sm btn-warning me-1" onclick="window.location.href='alertas.html?ticker=${fii.ticker}'">
+                        <i class="bi bi-bell"></i>
+                    </button>
+                    <button class="btn btn-sm btn-info" onclick="mostrarDetalhesFII('${fii.ticker}')">
+                        <i class="bi bi-info-circle"></i>
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }, 1); // Alta prioridade
+}, 200);
+
+// Configurar eventos
+function configurarEventos() {
+    // Botão de atualizar dados
+    document.getElementById('atualizar-dados').addEventListener('click', async () => {
+        try {
+            // Mostrar loading
+            const button = document.getElementById('atualizar-dados');
+            const iconOriginal = button.innerHTML;
+            button.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Atualizando...';
+            button.disabled = true;
+            
+            // Forçar atualização imediata
+            await realtimeMonitor.update();
+            
+            // Restaurar botão
+            button.innerHTML = iconOriginal;
+            button.disabled = false;
+        } catch (error) {
+            console.error('Erro ao atualizar dados:', error);
+            notify.error('Erro ao atualizar dados. Tente novamente.');
+        }
     });
     
-    // Criar modal de comparação
-    const modal = document.createElement('div');
-    modal.className = 'modal fade';
-    modal.id = 'comparacaoModal';
-    modal.tabIndex = '-1';
-    modal.setAttribute('aria-labelledby', 'comparacaoModalLabel');
-    modal.setAttribute('aria-hidden', 'true');
-    
-    modal.innerHTML = `
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="comparacaoModalLabel">Comparação de FIIs</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+    // Aplicar filtros
+    document.getElementById('aplicar-filtros').addEventListener('click', () => {
+        // Coletar segmentos selecionados
+        filtrosAtivos.segmentos = [];
+        ['recebiveis', 'logistico', 'shopping', 'escritorios', 'fof', 'hibrido'].forEach(id => {
+            const checkbox = document.getElementById(`filtro-${id}`);
+            if (checkbox.checked) {
+                filtrosAtivos.segmentos.push(checkbox.value);
+            }
+        });
+        
+        // Coletar outros filtros
+        filtrosAtivos.dyMinimo = parseFloat(document.getElementById('filtro-dy-min').value);
+        filtrosAtivos.pvpMaximo = parseFloat(document.getElementById('filtro-pvp-max').value);
+        filtrosAtivos.scoreMinimo = parseInt(document.getElementById('filtro-score-min').value);
+        
+        // Salvar preferências
+        const prefs = preferenciasUsuario.carregar();
+        prefs.filtrosPadrao = { ...filtrosAtivos };
+        preferenciasUsuario.salvar(prefs);
+        
+        // Renderizar tabela com novos filtros
+        renderizarTabela();
+        
+        // Fechar modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById('filtrosModal'));
+        modal.hide();
+        
+        notify.success('Filtros aplicados com sucesso!');
+    });
+}
+
+// Mostrar detalhes do FII
+const mostrarDetalhesFII = renderManager.debounce((ticker) => {
+    renderManager.enqueue('detalhes-fii', async () => {
+        try {
+            const fii = dadosFIIs.find(f => f.ticker === ticker);
+            if (!fii) throw new Error('FII não encontrado');
+            
+            const detalhesDiv = document.getElementById('detalhes-fii');
+            detalhesDiv.innerHTML = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <h4>${fii.ticker} - ${fii.segmento}</h4>
+                        <p><strong>Preço Atual:</strong> R$ ${fii.precoAtual.toFixed(2)}</p>
+                        <p><strong>Dividend Yield Anual:</strong> ${fii.dyAnual.toFixed(2)}%</p>
+                        <p><strong>P/VP:</strong> ${fii.pvp.toFixed(2)}</p>
+                        <p><strong>Último Dividendo:</strong> R$ ${fii.ultimoDividendo.toFixed(2)}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Score:</strong> ${fii.score.toFixed(0)}/100</p>
+                        <p><strong>Vacância Física:</strong> ${fii.vacanciaFisica?.toFixed(2) || '-'}%</p>
+                        <p><strong>Vacância Financeira:</strong> ${fii.vacanciaFinanceira?.toFixed(2) || '-'}%</p>
+                        <p><strong>Liquidez Diária:</strong> R$ ${(fii.liquidezDiaria || 0).toLocaleString('pt-BR', { maximumFractionDigits: 2 })}</p>
+                    </div>
                 </div>
-                <div class="modal-body">
-                    <div class="row mb-4">
-                        <div class="col-12">
-                            <canvas id="grafico-comparacao"></canvas>
+                <div class="row mt-3">
+                    <div class="col-md-12">
+                        <div class="btn-group">
+                            <button class="btn btn-primary" onclick="window.location.href='carteira.html?adicionar=${fii.ticker}'">
+                                <i class="bi bi-plus-circle"></i> Adicionar à Carteira
+                            </button>
+                            <button class="btn btn-warning" onclick="window.location.href='alertas.html?ticker=${fii.ticker}'">
+                                <i class="bi bi-bell"></i> Criar Alerta
+                            </button>
                         </div>
                     </div>
-                    <div class="table-responsive">
-                        <table class="table table-striped" id="tabela-comparacao">
-                            <thead>
-                                <tr>
-                                    <th>Indicador</th>
-                                    ${dadosComparacao.map(fii => `<th>${fii.ticker}</th>`).join('')}
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>Preço Atual</td>
-                                    ${dadosComparacao.map(fii => `<td>R$ ${fii.precoAtual.toFixed(2)}</td>`).join('')}
-                                </tr>
-                                <tr>
-                                    <td>Dividend Yield</td>
-                                    ${dadosComparacao.map(fii => `<td>${fii.dyAnual.toFixed(2)}%</td>`).join('')}
-                                </tr>
-                                <tr>
-                                    <td>P/VP</td>
-                                    ${dadosComparacao.map(fii => `<td>${fii.pvp.toFixed(2)}</td>`).join('')}
-                                </tr>
-                                <tr>
-                                    <td>Último Dividendo</td>
-                                    ${dadosComparacao.map(fii => `<td>R$ ${fii.ultimoDividendo.toFixed(2)}</td>`).join('')}
-                                </tr>
-                                <tr>
-                                    <td>Segmento</td>
-                                    ${dadosComparacao.map(fii => `<td>${fii.segmento}</td>`).join('')}
-                                </tr>
-                                <tr>
-                                    <td>Score</td>
-                                    ${dadosComparacao.map(fii => `<td>${fii.score}</td>`).join('')}
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
-                </div>
-            </div>
-        </div>
-    `;
-    
-    document.body.appendChild(modal);
-    
-    // Mostrar modal
-    const modalInstance = new bootstrap.Modal(document.getElementById('comparacaoModal'));
-    modalInstance.show();
-    
-    // Renderizar gráfico de comparação
-    setTimeout(() => {
-        const ctx = document.getElementById('grafico-comparacao').getContext('2d');
-        
-        new Chart(ctx, {
-            type: 'radar',
-            data: {
-                labels: ['DY (%)', 'P/VP', 'Score', 'Liquidez', 'Vacância', 'Potencial (%)'],
-                datasets: dadosComparacao.map((fii, index) => {
-                    // Cores diferentes para cada FII
-                    const cores = ['rgba(75, 192, 192, 0.7)', 'rgba(54, 162, 235, 0.7)', 'rgba(153, 102, 255, 0.7)', 'rgba(255, 159, 64, 0.7)'];
-                    
-                    return {
-                        label: fii.ticker,
-                        data: [
-                            fii.dyAnual,
-                            fii.pvp * 10, // Multiplicar para escala
-                            fii.score / 10, // Dividir para escala
-                            Math.min(10, fii.liquidezDiaria / 500000), // Normalizar para 0-10
-                            fii.vacancia ? 10 - fii.vacancia : 10, // Inverter (menor é melhor)
-                            parseFloat(fii.potencial)
-                        ],
-                        backgroundColor: cores[index % cores.length],
-                        borderColor: cores[index % cores.length].replace('0.7', '1'),
-                        borderWidth: 1
-                    };
-                })
-            },
-            options: {
-                responsive: true,
-                scales: {
-                    r: {
-                        angleLines: {
-                            display: true
-                        },
-                        suggestedMin: 0,
-                        suggestedMax: 10
-                    }
-                }
-            }
-        });
-    }, 500);
-}
-
-// Adicionar checkboxes para seleção de FIIs
-document.addEventListener('DOMContentLoaded', function() {
-    const tabela = document.querySelector('#tabela-fiis');
-    if (tabela) {
-        // Adicionar coluna de seleção no cabeçalho
-        const headerRow = tabela.querySelector('thead tr');
-        const th = document.createElement('th');
-        th.textContent = 'Comparar';
-        headerRow.prepend(th);
-        
-        // Adicionar checkboxes em cada linha
-        tabela.querySelectorAll('tbody tr').forEach(tr => {
-            const td = document.createElement('td');
-            const ticker = tr.querySelector('td:first-child').textContent;
-            td.innerHTML = `<input type="checkbox" class="fii-checkbox" value="${ticker}">`;
-            tr.prepend(td);
-        });
-        
-        // Adicionar botão de comparação
-        const cardHeader = document.querySelector('#monitoramento .card-header div');
-        if (cardHeader) {
-            const btnComparar = document.createElement('button');
-            btnComparar.className = 'btn btn-info me-2';
-            btnComparar.innerHTML = '<i class="bi bi-bar-chart"></i> Comparar FIIs';
-            btnComparar.addEventListener('click', compararFIIs);
-            cardHeader.prepend(btnComparar);
+            `;
+        } catch (error) {
+            console.error('Erro ao mostrar detalhes:', error);
+            notify.error('Erro ao carregar detalhes do FII');
         }
-    }
-});
+    }, 0); // Prioridade normal
+}, 100);
+
+// Exportar função para uso global
+window.mostrarDetalhesFII = mostrarDetalhesFII;
