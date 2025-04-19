@@ -6,7 +6,7 @@
 // Configurações
 const API_CONFIG = {
     cacheTimeout: 60 * 60 * 1000, // 1 hora em milissegundos
-    apiKey: '', // Adicione sua chave de API se necessário
+    apiKey: 'jFzJAnwjaRHv5A21PcLWYc', // Token da BRAPI
     proxyUrl: 'https://cors-anywhere.herokuapp.com/' // Proxy para contornar CORS
 };
 
