@@ -173,6 +173,35 @@
                 </div>
             </div>
         </div>
+
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h3>Análise Técnica</h3>
+                        <div class="input-group" style="width: 300px;">
+                            <select class="form-select" id="select-fii-analise">
+                                <option value="">Selecione um FII</option>
+                                <!-- Opções serão carregadas via JavaScript -->
+                            </select>
+                            <button class="btn btn-primary" onclick="atualizarAnaliseTecnica()">Analisar</button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-12 mb-4">
+                                <canvas id="grafico-candlestick" style="min-height: 400px;"></canvas>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12">
+                                <canvas id="grafico-stochastic" style="min-height: 200px;"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <footer class="bg-light text-center text-lg-start mt-4">
@@ -184,6 +213,8 @@
     <script src="js/utils/render-manager.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-financial"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
     <script src="js/api.js"></script>
     <script src="js/analise-setorial.js"></script>
 </body>

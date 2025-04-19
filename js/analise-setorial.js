@@ -18,6 +18,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Analisar dados setoriais
         dadosSetoriais = API.analisarSetores(dadosFIIs);
         
+        // Inicializar select de FIIs
+        inicializarSelectFIIs();
+        
         // Renderizar gráficos comparativos
         renderizarGraficoDYSetorial();
         renderizarGraficoPVPSetorial();
@@ -502,6 +505,257 @@ function renderizarGraficoTendenciaPVP() {
             }
         }
     });
+}
+
+// Renderizar gráfico candlestick com indicadores técnicos
+function renderizarGraficoCandlestick(ticker) {
+    const ctx = document.getElementById('grafico-candlestick').getContext('2d');
+    
+    // Simulando dados OHLC (Open, High, Low, Close) para demonstração
+    const dadosOHLC = gerarDadosOHLC();
+    
+    // Calcular médias móveis exponenciais
+    const ema9 = calcularEMA(dadosOHLC.map(d => d.close), 9);
+    const ema20 = calcularEMA(dadosOHLC.map(d => d.close), 20);
+    const ema50 = calcularEMA(dadosOHLC.map(d => d.close), 50);
+    const ema200 = calcularEMA(dadosOHLC.map(d => d.close), 200);
+    
+    // Calcular Stochastic Oscillator
+    const stochastic = calcularStochastic(dadosOHLC, 14, 3, 3);
+    
+    new Chart(ctx, {
+        type: 'candlestick',
+        data: {
+            datasets: [{
+                label: ticker,
+                data: dadosOHLC.map(d => ({
+                    t: d.time,
+                    o: d.open,
+                    h: d.high,
+                    l: d.low,
+                    c: d.close
+                }))
+            },
+            {
+                label: 'EMA 9',
+                data: ema9.map((value, index) => ({
+                    t: dadosOHLC[index].time,
+                    y: value
+                })),
+                type: 'line',
+                borderColor: 'rgba(255, 99, 132, 1)',
+                borderWidth: 1,
+                fill: false
+            },
+            {
+                label: 'EMA 20',
+                data: ema20.map((value, index) => ({
+                    t: dadosOHLC[index].time,
+                    y: value
+                })),
+                type: 'line',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1,
+                fill: false
+            },
+            {
+                label: 'EMA 50',
+                data: ema50.map((value, index) => ({
+                    t: dadosOHLC[index].time,
+                    y: value
+                })),
+                type: 'line',
+                borderColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 1,
+                fill: false
+            },
+            {
+                label: 'EMA 200',
+                data: ema200.map((value, index) => ({
+                    t: dadosOHLC[index].time,
+                    y: value
+                })),
+                type: 'line',
+                borderColor: 'rgba(153, 102, 255, 1)',
+                borderWidth: 1,
+                fill: false
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                x: {
+                    type: 'time',
+                    time: {
+                        unit: 'day'
+                    }
+                },
+                y: {
+                    title: {
+                        display: true,
+                        text: 'Preço (R$)'
+                    }
+                }
+            },
+            plugins: {
+                title: {
+                    display: true,
+                    text: `Análise Técnica - ${ticker}`
+                }
+            }
+        }
+    });
+    
+    // Renderizar Stochastic Oscillator em um gráfico separado
+    const ctxStoch = document.getElementById('grafico-stochastic').getContext('2d');
+    new Chart(ctxStoch, {
+        type: 'line',
+        data: {
+            labels: dadosOHLC.map(d => d.time),
+            datasets: [{
+                label: '%K',
+                data: stochastic.k,
+                borderColor: 'rgba(255, 99, 132, 1)',
+                fill: false
+            },
+            {
+                label: '%D',
+                data: stochastic.d,
+                borderColor: 'rgba(54, 162, 235, 1)',
+                fill: false
+            },
+            {
+                label: 'EMA 9',
+                data: calcularEMA(stochastic.k, 9),
+                borderColor: 'rgba(75, 192, 192, 1)',
+                fill: false
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    min: 0,
+                    max: 100,
+                    title: {
+                        display: true,
+                        text: 'Stochastic Oscillator'
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Função para inicializar o select de FIIs
+function inicializarSelectFIIs() {
+    const select = document.getElementById('select-fii-analise');
+    if (!select) return;
+
+    // Limpar opções existentes
+    select.innerHTML = '<option value="">Selecione um FII</option>';
+
+    // Ordenar FIIs por ticker
+    const fiisOrdenados = [...dadosFIIs].sort((a, b) => a.ticker.localeCompare(b.ticker));
+
+    // Adicionar opções
+    fiisOrdenados.forEach(fii => {
+        const option = document.createElement('option');
+        option.value = fii.ticker;
+        option.textContent = `${fii.ticker} - ${fii.segmento}`;
+        select.appendChild(option);
+    });
+}
+
+// Função para atualizar a análise técnica
+function atualizarAnaliseTecnica() {
+    const select = document.getElementById('select-fii-analise');
+    const ticker = select.value;
+    
+    if (!ticker) {
+        alert('Selecione um FII para análise');
+        return;
+    }
+    
+    renderizarGraficoCandlestick(ticker);
+}
+
+// Função para calcular EMA
+function calcularEMA(dados, periodo) {
+    const multiplicador = 2 / (periodo + 1);
+    const ema = [dados[0]];
+    
+    for (let i = 1; i < dados.length; i++) {
+        ema.push((dados[i] - ema[i-1]) * multiplicador + ema[i-1]);
+    }
+    
+    return ema;
+}
+
+// Função para calcular Stochastic Oscillator
+function calcularStochastic(dados, k, d, smooth) {
+    const kValues = [];
+    const dValues = [];
+    
+    // Calcular %K
+    for (let i = k-1; i < dados.length; i++) {
+        const periodo = dados.slice(i-k+1, i+1);
+        const highestHigh = Math.max(...periodo.map(p => p.high));
+        const lowestLow = Math.min(...periodo.map(p => p.low));
+        const close = dados[i].close;
+        
+        const k = ((close - lowestLow) / (highestHigh - lowestLow)) * 100;
+        kValues.push(k);
+    }
+    
+    // Suavizar %K
+    const kSmooth = calcularSMA(kValues, smooth);
+    
+    // Calcular %D (média móvel de %K)
+    const dSmooth = calcularSMA(kSmooth, d);
+    
+    return {
+        k: kSmooth,
+        d: dSmooth
+    };
+}
+
+// Função para calcular SMA (Simple Moving Average)
+function calcularSMA(dados, periodo) {
+    const sma = [];
+    for (let i = periodo-1; i < dados.length; i++) {
+        const soma = dados.slice(i-periodo+1, i+1).reduce((a, b) => a + b, 0);
+        sma.push(soma / periodo);
+    }
+    return sma;
+}
+
+// Função para gerar dados OHLC simulados
+function gerarDadosOHLC() {
+    const dados = [];
+    let preco = 100;
+    const hoje = new Date();
+    
+    for (let i = 200; i > 0; i--) {
+        const data = new Date(hoje);
+        data.setDate(data.getDate() - i);
+        
+        const variacao = (Math.random() - 0.5) * 2;
+        const high = preco + Math.random() * 2;
+        const low = preco - Math.random() * 2;
+        const open = preco;
+        preco += variacao;
+        
+        dados.push({
+            time: data,
+            open: open,
+            high: Math.max(high, open, preco),
+            low: Math.min(low, open, preco),
+            close: preco
+        });
+    }
+    
+    return dados;
 }
 
 
